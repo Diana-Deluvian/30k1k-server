@@ -24,18 +24,62 @@ connection.once("open", function() {
 const Book = require('./Book');
 const Word = require ('./Word');
 
-let word = {
-  wordname: "yolo",
-  type: ["yolo1", "yolo2"]
-}
+app.get('/word', (req, res) => {
+  Word.find({}, (err, words) =>{
+  if(err) return handleError(err)
+  res.send(words)   
+  });
+})
 
 app.post('/word', (req, res) => {   
-  console.log("here"); 
-  Word.create(word, function (err, word) {
-      if (err) return err;
+  Word.create(req.body, function (err, word) {
+      if (err) return handleError(err);
       console.log(word)
       res.send(word);
     });
+});
+
+app.put('/word/:id', (req, res) => {
+  const query = { "_id": req.params.id };
+  Word.updateOne(query)
+  .then(result => console.log(`updated ${result.updatedCount} item.`))
+  .catch(err => console.error(`update failed with error: ${err}`))
+});
+
+app.delete('/word/:id', (req, res) => {
+  const query = { "_id": req.params.id };
+  Word.deleteOne(query)
+  .then(result => console.log(`Deleted ${result.deletedCount} item.`))
+  .catch(err => console.error(`Delete failed with error: ${err}`))
+});
+
+app.get('/book', (req, res) => {
+  Book.find({}, (err, books) =>{
+  if(err) return handleError(err)
+  res.send(books)   
+  });
+})
+
+app.post('/book', (req, res) => {   
+  Book.create(req.body, function (err, book) {
+      if (err) return handleError(err);
+      console.log(book)
+      res.send(book);
+    });
+});
+
+app.put('/book/:id', (req, res) => {
+  const query = { "_id": req.params.id };
+  Book.updateOne(query)
+  .then(result => console.log(`updated ${result.updatedCount} item.`))
+  .catch(err => console.error(`update failed with error: ${err}`))
+});
+
+app.delete('/book/:id', (req, res) => {
+  const query = { "_id": req.params.id };
+  Book.deleteOne(query)
+  .then(result => console.log(`Deleted ${result.deletedCount} item.`))
+  .catch(err => console.error(`Delete failed with error: ${err}`))
 });
 
 
