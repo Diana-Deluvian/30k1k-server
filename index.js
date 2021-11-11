@@ -90,8 +90,21 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+const isAuth = (req, res, next) => {
+  if (req.isAuthenticated()) {
+      next();
+  } else {
+      res.status(401).json({ msg: "Hey wait a second, you're not diana!" });
+  }
+}
+
 app.post('/login', passport.authenticate('local',{ failureRedirect: '/login-failure', successRedirect: '/word' }), (err, req, res, next) => {
   if (err) res.send(err);
+});
+
+app.get('/logout', (req, res, next) => {
+  req.logout();
+  res.send('logged out!');
 });
 
 /* 
@@ -125,7 +138,7 @@ app.get('/word', (req, res) => {
   });
 })
 
-app.post('/word', (req, res) => {   
+app.post('/word', isAuth, (req, res) => {   
   Word.create(req.body, function (err, word) {
       if (err) return handleError(err);
       console.log(word)
@@ -133,14 +146,14 @@ app.post('/word', (req, res) => {
     });
 });
 
-app.put('/word/:id', (req, res) => {
+app.put('/word/:id', isAuth, (req, res) => {
   const query = { "_id": req.params.id };
   Word.updateOne(query)
   .then(result => console.log(`updated ${result.updatedCount} item.`))
   .catch(err => console.error(`update failed with error: ${err}`))
 });
 
-app.delete('/word/:id', (req, res) => {
+app.delete('/word/:id', isAuth, (req, res) => {
   const query = { "_id": req.params.id };
   Word.deleteOne(query)
   .then(result => console.log(`Deleted ${result.deletedCount} item.`))
@@ -154,7 +167,7 @@ app.get('/book', (req, res) => {
   });
 })
 
-app.post('/book', (req, res) => {   
+app.post('/book', isAuth, (req, res) => {   
   Book.create(req.body, function (err, book) {
       if (err) return handleError(err);
       console.log(book)
@@ -162,14 +175,14 @@ app.post('/book', (req, res) => {
     });
 });
 
-app.put('/book/:id', (req, res) => {
+app.put('/book/:id', isAuth, (req, res) => {
   const query = { "_id": req.params.id };
   Book.updateOne(query)
   .then(result => console.log(`updated ${result.updatedCount} item.`))
   .catch(err => console.error(`update failed with error: ${err}`))
 });
 
-app.delete('/book/:id', (req, res) => {
+app.delete('/book/:id', isAuth, (req, res) => {
   const query = { "_id": req.params.id };
   Book.deleteOne(query)
   .then(result => console.log(`Deleted ${result.deletedCount} item.`))
