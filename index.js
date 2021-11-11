@@ -1,11 +1,19 @@
 const express = require('express');
-require('dotenv').config();
-const PORT = process.env.PORT || 8080;
-const cors = require('cors')
 const app = express();
+const cors = require('cors');
+const session = require('express-session');
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
+const crypto = require('crypto');
 
+
+require('dotenv').config();
 app.use(express.json());
+app.use(express.urlencoded({extended: true}));
 app.use(cors());
+
+const MongoStore = require('connect-mongo')(session);
+const PORT = process.env.PORT || 8080;
 
 const mongoose = require("mongoose");
 mongoose.connect("mongodb+srv://" + process.env.DB_USERNAME 
@@ -22,7 +30,93 @@ connection.once("open", function() {
 });
 
 const Book = require('./Book');
-const Word = require ('./Word');
+const Word = require('./Word');
+const User = require('./User');
+
+function validatePassword(password, hash, salt) {
+  var hashVerify = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
+  return hash === hashVerify;
+}
+
+function genPassword(password) {
+  var salt = crypto.randomBytes(32).toString('hex');
+  var genHash = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
+  
+  return {
+    salt: salt,
+    hash: genHash
+  };
+}
+
+passport.use(new LocalStrategy(
+  function(username, password, cb) {
+    console.log("here1");
+    User.findOne({username})
+    .then((user) => {
+      if(!user) return cb(null, false)
+      console.log("here2");
+      const isValid = validatePassword(password, user.hash, user.salt);
+      isValid ? cb(null, user) : cb(null, false)
+    })
+    .catch((err) => console.log(err))
+  }
+));
+
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
+
+passport.deserializeUser((user, done) => {
+  User.findById(user.id)
+  .then((user) => {
+    done(null, user)
+  })
+  .catch((err) => done(err))
+});
+
+
+const sessionStore = new MongoStore({ mongooseConnection: connection, collection: 'sessions' });
+
+app.use(session({
+  secret: process.env.SECRET,
+  resave: false,
+  saveUninitialized: true,
+  store: sessionStore,
+  cookie: {
+      maxAge: 365 * 1000 * 60 * 60 * 24 // Equals 365 days (1 day * 24 hr/1 day * 60 min/1 hr * 60 sec/1 min * 1000 ms / 1 sec)
+  }
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+app.post('/login', passport.authenticate('local',{ failureRedirect: '/login-failure', successRedirect: '/word' }), (err, req, res, next) => {
+  if (err) res.send(err);
+});
+
+/* 
+app.post('/register', (req, res, next) => {
+    
+  const saltHash = genPassword(req.body.password);
+  
+  const salt = saltHash.salt;
+  const hash = saltHash.hash;
+
+  const newUser = new User({
+      username: req.body.username,
+      hash: hash,
+      salt: salt
+  });
+
+  newUser.save()
+      .then((user) => {
+          console.log(user);
+      });
+
+  res.send("registered.");
+
+});
+*/
 
 app.get('/word', (req, res) => {
   Word.find({}, (err, words) =>{
