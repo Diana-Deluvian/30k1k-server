@@ -7,11 +7,10 @@ module.exports = function (passport) {
     new localStrategy((username, password, done) => {
       console.log(username, password);
       User.findOne({ username: username }, (err, user) => {
-        console.log('tst');
-        if (err) throw err;
+        if (err) handleError(err);
         if (!user) return done(null, false);
         bcrypt.compare(password, user.password, (err, result) => {
-          if (err) throw err;
+          if (err) handleError(err);
           if (result === true) {
             return done(null, user);
           } else {
@@ -27,6 +26,7 @@ module.exports = function (passport) {
   });
   passport.deserializeUser((id, cb) => {
     User.findOne({ _id: id }, (err, user) => {
+      if (err) handleError(err);
       const userInformation = {
         username: user.username,
       };
@@ -34,3 +34,7 @@ module.exports = function (passport) {
     });
   });
 };
+
+const handleError = (err) => {
+  console.log(err);
+}

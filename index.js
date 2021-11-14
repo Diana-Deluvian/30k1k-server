@@ -6,7 +6,7 @@ const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const crypto = require('crypto');
 const cookieParser = require('cookie-parser');
-const bcrypt = require("bcryptjs");
+const bcrypt = require('bcryptjs');
 
 
 require('dotenv').config();
@@ -14,7 +14,7 @@ app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 app.use(
   cors( {
-    origin: ["http://localhost:3000", "http://192.168.1.234:3000"], // <-- location of the react app were connecting to
+    origin: ["http://localhost:3000", "http://192.168.1.234:3000"],
     credentials: true,
   })
 );
@@ -48,7 +48,7 @@ app.use(session({
   saveUninitialized: true,
   store: sessionStore,
   cookie: {
-      maxAge: 365 * 1000 * 60 * 60 * 24 // Equals 365 days (24 hr/1 day * 60 min/1 hr * 60 sec/1 min * 1000 ms / 1 sec)
+      maxAge: 365 * 86400 * 1000 // calculate the milliseconds in 365 days
   }
 }));
 
@@ -65,21 +65,18 @@ const isAuth = (req, res, next) => {
   if (req.isAuthenticated()) {
       next();
   } else {
-    console.log(req);
       res.status(401).json({ msg: "Hey wait a second, you're not diana!" });
   }
 }
 
 app.post("/login", (req, res, next) => {
   passport.authenticate("local", (err, user, info) => {
-    console.log('here', user);
-    if (err) throw err;
+    if (err) handleError(err);
     if (!user) res.send("No User Exists");
     else {
       req.logIn(user, (err) => {
-        if (err) throw err;
+        if (err) handleError(err);
         res.send("Successfully Authenticated");
-        console.log(req.user);
       });
     }
   })(req, res, next);
@@ -90,14 +87,13 @@ app.get('/logout', (req, res, next) => {
   res.send('logged out!');
 });
 
- 
+/* 
 app.post("/register", (req, res) => {
-  User.findOne({ username: req.body.username }, async (err, doc) => {
-    if (err) throw err;
-    if (doc) res.send("User Already Exists");
-    if (!doc) {
+  User.findOne({ username: req.body.username }, async (err, user) => {
+    if (err) handleError(err);
+    if (user) res.send("User Already Exists");
+    if (!user) {
       const hashedPassword = await bcrypt.hash(req.body.password, 10);
-      console.log(hashedPassword);
       const newUser = new User({
         username: req.body.username,
         password: hashedPassword,
@@ -107,10 +103,12 @@ app.post("/register", (req, res) => {
     }
   });
 });
+*/ 
+// This project is only really based for me and I already have an account so no need to leave this enabled
 
 app.get("/user", (req, res) => {
   console.log(req.user);
-  res.send(req.user); // The req.user stores the entire user that has been authenticated inside of it.
+  res.send(req.user);
 });
 
 
@@ -135,13 +133,13 @@ app.put('/word/:id', isAuth, (req, res) => {
     req.body,
     {returnDocument: 'after'})
   .then(result => res.send(result))
-  .catch(err => console.error(`Delete failed with error: ${err}`))
+  .catch(err => handleError(err))
 });
 
 app.delete('/word/:id', isAuth, (req, res) => {
   Word.deleteOne({_id: req.params.id})
   .then(result => res.send(result))
-  .catch(err => console.error(`Delete failed with error: ${err}`))
+  .catch(err => handleError(err))
 });
 
 app.get('/books', (req, res) => {
@@ -153,11 +151,9 @@ app.get('/books', (req, res) => {
 
 app.post('/book', isAuth, (req, res) => {  
   Book.create(req.body, function (err, book) {
-    console.log(err);
-      if (err) return handleError(err);
-      console.log(book)
-      res.send(book);
-    });
+    if (err) return handleError(err);
+    res.send(book);
+  });
 });
 
 app.put('/book/:id', isAuth, (req, res) => {
