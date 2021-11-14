@@ -3,8 +3,7 @@ const { Schema } = mongoose;
 
 const userSchema = new Schema({
   username: String,
-  hash: String,
-  salt: String
+  password: String,
 });
 
 const User = mongoose.model('User', userSchema);

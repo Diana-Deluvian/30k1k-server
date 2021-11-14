@@ -5,7 +5,7 @@ const bookSchema = new Schema({
   bookname: String,
   author: String,
   source: String,
-  optionSelected: [String],
+  optionSelected: [Object],
   additionalInfo: String
 });
 

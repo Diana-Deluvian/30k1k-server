@@ -5,7 +5,7 @@ const wordSchema = new Schema({
   wordname: String,
   type: [String],
   meaning: String,
-  exampe: String,
+  example: String,
   additionalInfo: String
 });
 
