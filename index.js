@@ -14,7 +14,7 @@ app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 app.use(
   cors( {
-    origin: ["http://localhost:3000", "http://192.168.1.234:3000", "https://30k1k.netlify.app/"],
+    origin: ["http://localhost:3000", "http://192.168.1.234:3000", "https://30k1k.netlify.app"],
     credentials: true,
   })
 );
