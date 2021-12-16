@@ -46,8 +46,9 @@ app.use(session({
   secret: process.env.SECRET,
   resave: true,
   saveUninitialized: true,
-  store: sessionStore,
+  store: sessionStore,  
   cookie: {
+    httpOnly: false,
       maxAge: 365 * 86400 * 1000 // calculate the milliseconds in 365 days
   }
 }));
